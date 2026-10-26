@@ -24,3 +24,7 @@
 // IO
 #include <SalCore/IO/Console.hpp>
 #include <SalCore/IO/File.hpp>
+
+// Misc
+#include <SalCore/Misc/Enums.hpp>
+#include <SalCore/Misc/Events.hpp>

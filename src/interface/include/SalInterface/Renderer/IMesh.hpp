@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SalCore/Core.hpp>
-#include <SalInterface/Misc/Enums.hpp>
+#include <SalCore/Misc/Enums.hpp>
 #include <SalInterface/Renderer/IRenderResource.hpp>
 
 namespace sal::interface {

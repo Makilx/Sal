@@ -22,6 +22,8 @@
 #include <array>         // IWYU pragma: keep
 #include <concepts>      // IWYU pragma: keep
 #include <cstring>       // IWYU pragma: keep
+#include <thread>        // IWYU pragma: keep
+#include <chrono>        // IWYU pragma: keep
 
 // Typedef
 namespace sal {

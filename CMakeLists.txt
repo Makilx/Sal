@@ -41,9 +41,7 @@ add_custom_target(SalResources ALL
 add_executable(Sal_Debug src/Dummy.cpp)
 target_link_libraries(
   Sal_Debug
-  PUBLIC
-  Sal_Core
-  Sal_Interface
+  PRIVATE
   Sal_Engine
-  Sal_Backend
+  Sal_Core
 )

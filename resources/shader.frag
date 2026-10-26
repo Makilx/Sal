@@ -19,7 +19,7 @@ void main()
     }
 
     vec3 normal = normalize(v_Normal);
-    vec3 lightDirection = normalize(vec3(0.5, 1.0, 0.3));
+    vec3 lightDirection = normalize(vec3(1, 1.0, 0.3));
 
     float diffuse = max(dot(normal, lightDirection), 0.0);
     float lighting = 0.2 + diffuse * 0.8;

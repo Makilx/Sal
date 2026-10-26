@@ -190,6 +190,9 @@ namespace sal::backend {
     }
 
     interface::IMesh *OpenGLRenderer::CreateMesh() {
+        if (!_loaded) {
+            return nullptr;
+        }
         UniquePtr<OpenGLMesh> mesh = std::make_unique<OpenGLMesh>();
         OpenGLMesh *ptr = mesh.get();
 
@@ -198,6 +201,9 @@ namespace sal::backend {
     }
 
     interface::IShader *OpenGLRenderer::CreateShader() {
+        if (!_loaded) {
+            return nullptr;
+        }
         UniquePtr<OpenGLShader> mesh = std::make_unique<OpenGLShader>();
         OpenGLShader *ptr = mesh.get();
 
@@ -206,6 +212,9 @@ namespace sal::backend {
     }
 
     interface::ITexture *OpenGLRenderer::CreateTexture() {
+        if (!_loaded) {
+            return nullptr;
+        }
         UniquePtr<OpenGLTexture> mesh = std::make_unique<OpenGLTexture>();
         OpenGLTexture *ptr = mesh.get();
 
@@ -214,6 +223,9 @@ namespace sal::backend {
     }
 
     interface::IShaderProgram *OpenGLRenderer::CreateProgram() {
+        if (!_loaded) {
+            return nullptr;
+        }
         UniquePtr<OpenGLShaderProgram> mesh =
             std::make_unique<OpenGLShaderProgram>();
         OpenGLShaderProgram *ptr = mesh.get();

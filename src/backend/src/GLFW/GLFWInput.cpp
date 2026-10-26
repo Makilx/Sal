@@ -166,6 +166,7 @@ namespace sal::backend {
                     pressing;
 
                 InputStateEvent e;
+                e.Position = inputManager.GetMousePosition();
                 e.Type = InputType::Mouse;
                 e.State = pressing ? InputState::Begin : InputState::End;
                 e.MouseButton = target;

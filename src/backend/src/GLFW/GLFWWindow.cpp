@@ -6,7 +6,7 @@ namespace {
 }
 
 namespace sal::backend {
-    void GLFWWindow::Initialize() {
+    bool GLFWWindow::Initialize() {
         if (_loaded) {
             Terminate();
         }
@@ -15,7 +15,7 @@ namespace sal::backend {
         if (INSTANCE_COUNT == 0) {
             if (!glfwInit()) {
                 Console::Error("Window => Failed to initialize GLFW");
-                return;
+                return false;
             }
         }
 
@@ -26,7 +26,7 @@ namespace sal::backend {
 
         if (!_handle) {
             Console::Error("Window => Failed to create GLFW window");
-            return;
+            return false;
         }
 
         GLFWwindow *windowHandle = static_cast<GLFWwindow *>(_handle);
@@ -93,6 +93,7 @@ namespace sal::backend {
 
         WindowCreatedEvent event;
         Created.Fire(event);
+        return true;
     }
 
     void GLFWWindow::Terminate() {
@@ -121,6 +122,7 @@ namespace sal::backend {
             return;
         }
         glfwPollEvents();
+        _inputManager.OnUpdate();
     }
 
     void GLFWWindow::SwapBuffers() {

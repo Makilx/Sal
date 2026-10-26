@@ -1,27 +1,8 @@
 #pragma once
 
 #include <SalCore/Core.hpp>
-#include <SalInterface/Misc/Enums.hpp>
-
-namespace sal {
-    struct InputStateEvent final : public Event {
-        String ToString() const override { return sal::ToString(Type); }
-        InputType Type = InputType::Unknown;
-        InputState State = InputState::Begin;
-        Key Key = Key::Unknown;
-        MouseButton MouseButton = MouseButton::Unknown;
-        Vector2 Position = Vector2::Zero;
-        Vector2 Delta = Vector2::Zero;
-    };
-
-    struct MouseStateChangedEvent final : public Event {
-        String ToString() const override { return sal::ToString(State); }
-        MouseState State;
-    };
-
-    Sal_Stringify_Prebuilt(InputStateEvent);
-    Sal_Stringify_Prebuilt(MouseStateChangedEvent);
-}
+#include <SalCore/Misc/Enums.hpp>
+#include <SalCore/Misc/Events.hpp>
 
 namespace sal::interface {
     class IWindow;

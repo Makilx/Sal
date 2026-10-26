@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SalInterface/Misc/Enums.hpp>
+#include <SalCore/Misc/Enums.hpp>
 #include <SalCore/Type/Convert.hpp>
 
 namespace sal {
@@ -431,4 +431,31 @@ namespace sal {
                 return "Unknown";
         });
 
+    Sal_Stringify(
+        AudioState, switch (t) {
+            case sal::AudioState::Playing:
+                return "Playing";
+            case sal::AudioState::Paused:
+                return "Paused";
+            case sal::AudioState::Stopped:
+                return "Stopped";
+            case sal::AudioState::Unloaded:
+                return "Unloaded";
+        });
+
+    // RunService
+
+    Sal_Stringify(
+        RunPriority, switch (t) {
+            case sal::RunPriority::First:
+                return "First";
+            case sal::RunPriority::Input:
+                return "Input";
+            case sal::RunPriority::Update:
+                return "Update";
+            case sal::RunPriority::Render:
+                return "Render";
+            case sal::RunPriority::Last:
+                return "Last";
+        });
 }

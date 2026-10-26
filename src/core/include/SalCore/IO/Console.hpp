@@ -77,6 +77,29 @@ namespace sal {
             return input;
         }
 
+        static void Divider(SizeT width = 60, char character = '-') {
+            std::cout << ToAnsiColor(TimestampColor) << String(width, character)
+                      << "\033[0m" << '\n';
+        }
+
+        static void Divider(const String &title, SizeT width = 60,
+                            char character = '-') {
+            const String label = " " + title + " ";
+            const SizeT lineWidth =
+                width > label.size() ? width - label.size() : 0;
+            const SizeT left = lineWidth / 2;
+            const SizeT right = lineWidth - left;
+
+            std::cout << ToAnsiColor(TimestampColor) << String(left, character)
+                      << label << String(right, character) << "\033[0m" << '\n';
+        }
+
+        static void Break(SizeT amount = 1) {
+            for (SizeT i = 0; i < amount; i++) {
+                std::cout << "\n";
+            }
+        }
+
     private:
         static String ToAnsiColor(const Color &color) {
             const int r = static_cast<int>(Clamp01(color.R) * 255.0f);

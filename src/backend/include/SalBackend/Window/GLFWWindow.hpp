@@ -12,7 +12,7 @@ namespace sal::backend {
         ~GLFWWindow() override { Terminate(); }
 
     public:
-        void Initialize() override;
+        bool Initialize() override;
         bool IsInitialized() const override { return _loaded; }
         void Terminate() override;
 
@@ -33,6 +33,7 @@ namespace sal::backend {
         interface::IInput &GetInputManager() const override {
             return (interface::IInput &)_inputManager;
         }
+        virtual String GetTitle() const override { return _title; }
 
         void SetSize(IVector2 size) override;
         void SetVSYNC(bool enabled) override;

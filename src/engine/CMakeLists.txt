@@ -1,10 +1,16 @@
 # Sal Interface
-add_library(Sal_Engine ../Dummy.cpp)
+add_library(
+  Sal_Engine
+
+  src/DataModel.cpp
+  src/Services/WindowService.cpp
+  src/Services/RunService.cpp
+)
 
 # Include
 target_include_directories(
   Sal_Engine
-  INTERFACE
+  PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 

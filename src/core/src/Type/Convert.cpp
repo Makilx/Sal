@@ -52,15 +52,15 @@ namespace sal {
         return ec == std::errc{} && ptr == end;
     }
 
-    bool ToInt(const String &string, int *out) {
+    bool StrToInt(const String &string, int *out) {
         return StringToNumber(string, out);
     }
 
-    bool ToFloat(const String &string, float *out) {
+    bool StrToFloat(const String &string, float *out) {
         return StringToNumber(string, out);
     }
 
-    bool ToDouble(const String &string, double *out) {
+    bool StrToDouble(const String &string, double *out) {
         return StringToNumber(string, out);
     }
 }

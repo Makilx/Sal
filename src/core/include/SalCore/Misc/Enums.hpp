@@ -230,6 +230,22 @@ namespace sal {
     enum class AudioAPI {
         MiniAudio = 0,
     };
+
+    enum class AudioState {
+        Playing = 0,
+        Paused,
+        Stopped,
+        Unloaded,
+    };
+
+    // Render Service
+    enum class RunPriority : SizeT {
+        First = 0,
+        Input = 1000,
+        Update = 2000,
+        Render = 3000,
+        Last = 5000
+    };
 }
 
 #include "EnumsStringfy.hpp" // IWYU pragma: keep

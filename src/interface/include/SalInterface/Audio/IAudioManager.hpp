@@ -16,7 +16,7 @@ namespace sal::interface {
         virtual bool IsInitialized() const = 0;
         virtual void Terminate() = 0;
 
-        virtual UniquePtr<IAudio> CreateAudio() = 0;
+        virtual IAudio *CreateAudio() = 0;
 
     private:
         AudioAPI _audioAPI;

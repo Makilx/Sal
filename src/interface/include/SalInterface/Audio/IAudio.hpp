@@ -1,23 +1,23 @@
 #pragma once
 
 #include <SalCore/Core.hpp>
-#include <SalInterface/Misc/Enums.hpp>
+#include <SalCore/Misc/Enums.hpp>
 
 namespace sal::interface {
     class IAudioManager;
 
     class IAudio {
     public:
-        IAudio(AudioAPI api, IAudioManager *manager)
+        IAudio(AudioAPI api, IAudioManager &manager)
             : _audioAPI(api), _manager(manager) {}
         virtual ~IAudio() = default;
 
         AudioAPI GetAudioAPI() const { return _audioAPI; }
-        IAudioManager &GetAudioManager() const { return *_manager; }
+        IAudioManager &GetAudioManager() const { return _manager; }
 
     public:
         virtual bool Load(const Path &file) = 0;
-        virtual bool Load(const Vector<Byte> &data, const SizeT size) = 0;
+        virtual bool Load(const Vector<Byte> &data) = 0;
         virtual bool IsLoaded() const = 0;
         virtual void Unload() = 0;
 
@@ -30,7 +30,8 @@ namespace sal::interface {
         virtual double GetTimestamp() const = 0;
         virtual Vector3 GetPosition() const = 0;
         virtual bool IsLooped() const = 0;
-        virtual bool IsPlaying() const = 0;
+        virtual AudioState GetState() const = 0;
+        virtual double GetDuration() const = 0;
 
         virtual void SetVolume(float volume) = 0;
         virtual void SetPitch(float pitch) = 0;
@@ -40,6 +41,6 @@ namespace sal::interface {
 
     private:
         AudioAPI _audioAPI;
-        IAudioManager *_manager = nullptr;
+        IAudioManager &_manager;
     };
 }

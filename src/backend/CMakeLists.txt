@@ -10,6 +10,11 @@ add_library(
   src/OpenGL/OpenGLTexture.cpp
   src/OpenGL/OpenGLRenderer.cpp
 
+  src/MiniAudio/MiniAudioAudio.cpp
+  src/MiniAudio/MiniAudioAudioManager.cpp
+
+  src/BackendFactory.cpp
+
   src/stb_image_imp.cpp
 )
 
@@ -63,6 +68,13 @@ ImportRepo(stb https://github.com/nothings/stb.git master)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE ${stb_SOURCE_DIR})
 
+# Miniaudio
+ImportRepo(miniaudio https://github.com/mackron/miniaudio.git 350784a)
+
+if(UNIX AND NOT APPLE)
+  target_link_libraries(Sal_Backend PRIVATE pthread m dl)
+endif()
+
 # Linking
 target_link_libraries(
     Sal_Backend
@@ -70,4 +82,5 @@ target_link_libraries(
     glad
     glfw
     stb_image
+    miniaudio
 )
