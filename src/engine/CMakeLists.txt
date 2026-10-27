@@ -5,6 +5,7 @@ add_library(
   src/DataModel.cpp
   src/Services/WindowService.cpp
   src/Services/RunService.cpp
+  src/Services/InputService.cpp
 )
 
 # Include

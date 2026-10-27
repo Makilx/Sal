@@ -16,14 +16,15 @@ namespace sal {
         template <typename T>
             requires(std::is_base_of_v<Service, T> &&
                      !std::is_same_v<Service, T>)
-        T *GetService() const {
+        T &GetService() const {
             for (const UniquePtr<Service> &service : _loadedServices) {
                 if (T *cast = dynamic_cast<T *>(service.get())) {
-                    return cast;
+                    return *cast;
                 }
             }
 
-            return nullptr;
+            throw std::logic_error(
+                "DataModel invariant violated: service not found.");
         }
 
     private:

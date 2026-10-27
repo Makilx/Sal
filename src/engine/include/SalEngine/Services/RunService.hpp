@@ -24,7 +24,6 @@ namespace sal {
 
     public:
         RunService(DataModel &dataModel, void *windowHandle);
-        ~RunService();
 
         bool IsInitialized() const override { return _loaded; }
         String ToString() const override { return "RunService"; }

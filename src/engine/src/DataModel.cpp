@@ -1,6 +1,7 @@
 #include <SalEngine/DataModel/DataModel.hpp>
 #include <SalEngine/Services/WindowService.hpp>
 #include <SalEngine/Services/RunService.hpp>
+#include <SalEngine/Services/InputService.hpp>
 #include <SalBackend/BackendFactory.hpp>
 
 namespace sal {
@@ -53,13 +54,21 @@ namespace sal {
         interface::IWindow *window = _handles->_windowHandle.get();
         interface::IRenderer *renderer = _handles->_rendererHandle.get();
 
-        RunService *runService = GetService<RunService>();
+        RunService &runService = GetService<RunService>();
 
         renderer->Initialize(window);
+        renderer->SetBackgroundColor(Color(0.5, 0.2, 0.3));
+
+        // bind runservice renderer
+        runService.BindToUpdate(static_cast<SizeT>(RunPriority::Update),
+                                [renderer](double) { renderer->BeginFrame(); });
+
+        runService.BindToUpdate(static_cast<SizeT>(RunPriority::Render) - 1,
+                                [renderer](double) { renderer->EndFrame(); });
 
         while (_running && !window->ShouldClose()) {
-            // renderer
-            runService->Step();
+            // update
+            runService.Step();
         }
 
         // on finish
@@ -132,6 +141,9 @@ namespace sal {
             dataModel, _handles->_windowHandle.get()));
 
         _loadedServices.push_back(std::make_unique<WindowService>(
+            dataModel, _handles->_windowHandle.get()));
+
+        _loadedServices.push_back(std::make_unique<InputService>(
             dataModel, _handles->_windowHandle.get()));
     }
 

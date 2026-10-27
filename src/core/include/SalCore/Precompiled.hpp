@@ -24,6 +24,7 @@
 #include <cstring>       // IWYU pragma: keep
 #include <thread>        // IWYU pragma: keep
 #include <chrono>        // IWYU pragma: keep
+#include <variant>       // IWYU pragma: keep
 
 // Typedef
 namespace sal {

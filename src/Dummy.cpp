@@ -5,35 +5,25 @@ using namespace sal;
 int main() {
     DataModel dataModel;
 
-    String name = Console::Read("Please enter the window name");
+    WindowService &windowService = dataModel.GetService<WindowService>();
+    windowService.SetWindowTitle("Sal Window");
 
-    int width;
-    int height;
-    String output1 = Console::Read("Enter the window width");
-    String output2 = Console::Read("Enter the window width");
-    bool success1 = StrToInt(output1, &width);
-    bool success2 = StrToInt(output2, &height);
+    RunService &runService = dataModel.GetService<RunService>();
+    runService.SetMaxFramerate(1);
 
-    if (!success1 || !success2) {
-        return 1;
-    }
-
-    Console::Warn(name, width, height);
-
-    WindowService *windowService = dataModel.GetService<WindowService>();
-    windowService->SetWindowTitle(name);
-    windowService->SetWindowSize(IVector2(width, height));
-
-    RunService *runService = dataModel.GetService<RunService>();
-    runService->SetMaxFramerate(1);
-
-    runService->BindToUpdate(5000, [runService](double deltaTime) {
-        Console::Print(runService->GetFramerate());
+    InputService &inputService = dataModel.GetService<InputService>();
+    bool inFullscreen = false;
+    inputService.InputBegin.Connect([&windowService,
+                                     &inFullscreen](InputStateEvent &e) {
+        if (e.Key == Key::F11) {
+            inFullscreen = !inFullscreen;
+            windowService.SetWindowState(inFullscreen
+                                             ? WindowState::BorderlessFullscreen
+                                             : WindowState::Windowed);
+        }
     });
 
-    Console::Print("Starting the engine!");
     dataModel.Run();
-    Console::Print("Yay!");
 
     return 0;
 }

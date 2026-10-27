@@ -11,5 +11,6 @@
 // Services
 #include <SalEngine/Services/WindowService.hpp>
 #include <SalEngine/Services/RunService.hpp>
+#include <SalEngine/Services/InputService.hpp>
 
 // Instances

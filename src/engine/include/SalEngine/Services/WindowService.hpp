@@ -6,7 +6,6 @@ namespace sal {
     class WindowService final : public Service {
     public:
         WindowService(DataModel &dataModel, void *windowHandle);
-        ~WindowService();
 
         bool IsInitialized() const override { return _loaded; }
         String ToString() const override { return "WindowService"; }

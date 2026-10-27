@@ -8,8 +8,6 @@ namespace sal {
     WindowService::WindowService(DataModel &dataModel, void *handle)
         : Service(dataModel), _windowHandle(handle) {}
 
-    WindowService::~WindowService() { Terminate(); }
-
     // ---------------------------- //
 
     String WindowService::GetWindowTitle() const {
@@ -72,16 +70,16 @@ namespace sal {
             _loaded = true;
 
             // setup runservice updates
-            RunService *runService = GetDataModel().GetService<RunService>();
+            RunService &runService = GetDataModel().GetService<RunService>();
 
-            auto a = runService->BindToUpdate(
+            auto a = runService.BindToUpdate(
                 static_cast<SizeT>(RunPriority::Input),
                 [this](double deltaTime) {
                     static_cast<interface::IWindow *>(_windowHandle)
                         ->PollEvents();
                 });
 
-            auto b = runService->BindToUpdate(
+            auto b = runService.BindToUpdate(
                 static_cast<SizeT>(RunPriority::Render),
                 [this](double deltaTime) {
                     static_cast<interface::IWindow *>(_windowHandle)

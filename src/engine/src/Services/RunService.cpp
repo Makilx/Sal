@@ -12,8 +12,6 @@ namespace sal {
     RunService::RunService(DataModel &dataModel, void *windowHandle)
         : Service(dataModel), _windowHandle(windowHandle) {}
 
-    RunService::~RunService() { Terminate(); }
-
     bool RunService::IsVSYNCEnabled() const {
         return static_cast<interface::IWindow *>(_windowHandle)
             ->IsVSYNCEnabled();

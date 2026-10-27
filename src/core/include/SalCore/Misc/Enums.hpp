@@ -226,6 +226,8 @@ namespace sal {
         End,
     };
 
+    using ActionInput = std::variant<Key, MouseButton>;
+
     // Audio
     enum class AudioAPI {
         MiniAudio = 0,
