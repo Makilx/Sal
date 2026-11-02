@@ -130,8 +130,10 @@ namespace sal::backend {
             OpenGLShaderProgram *shaders =
                 static_cast<OpenGLShaderProgram *>(command.Material->Shaders);
 
+            Material targetMaterial = (command.Material->CustomMaterial != nullptr) ? *command.Material->CustomMaterial : interface::MaterialConfig::DEFAULT_MATERIAL;
+
             glUseProgram(shaders->GetHandle());
-            shaders->Set("Sal_TintColor", command.Material->Tint);
+            shaders->Set("Sal_TintColor", targetMaterial.Tint);
 
             // textures
             bool hasTexture = command.Material->Texture &&

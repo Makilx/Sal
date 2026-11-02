@@ -36,9 +36,61 @@ namespace sal {
 
     template <typename T>
     class Signal {
-        static_assert(std::is_base_of<Event, T>::value,
+        static_assert(std::is_base_of_v<Event, T>,
                       "Type T does not inherit base struct 'Event'");
+
         using Listener = Function<void(T &)>;
+
+        struct Waiter {
+            std::coroutine_handle<> _handle;
+            std::shared_ptr<const T> _event;
+            bool _active = true;
+        };
+
+        struct WaitState {
+            Vector<std::shared_ptr<Waiter>> _waiters;
+        };
+
+    public:
+        class WaitAwaitable {
+        public:
+            explicit WaitAwaitable(std::shared_ptr<WaitState> state)
+                : _state(std::move(state)),
+                  _waiter(std::make_shared<Waiter>()) {}
+
+            WaitAwaitable(const WaitAwaitable &) = delete;
+            WaitAwaitable &operator=(const WaitAwaitable &) = delete;
+
+            WaitAwaitable(WaitAwaitable &&) noexcept = default;
+            WaitAwaitable &operator=(WaitAwaitable &&) = delete;
+
+            ~WaitAwaitable() {
+                if (_waiter) {
+                    _waiter->_active = false;
+                }
+            }
+
+            bool await_ready() const noexcept {
+                return false;
+            }
+
+            void await_suspend(std::coroutine_handle<> handle) {
+                _waiter->_handle = handle;
+                _state->_waiters.push_back(_waiter);
+            }
+
+            T await_resume() const {
+                return *_waiter->_event;
+            }
+
+        private:
+            std::shared_ptr<WaitState> _state;
+            std::shared_ptr<Waiter> _waiter;
+        };
+
+        WaitAwaitable Wait() {
+            return WaitAwaitable(_waitState);
+        }
 
     public:
         Connection<T> Connect(Listener listener) {
@@ -71,7 +123,10 @@ namespace sal {
         void DisconnectAll() { _connections.erase(); }
 
         void Fire(T &event) {
-            // trigger listeners
+            Vector<std::shared_ptr<Waiter>> waiters;
+            waiters.swap(_waitState->_waiters);
+
+            // Trigger listeners
             for (auto &connection : _connections) {
                 if (!connection._connected) {
                     continue;
@@ -84,13 +139,30 @@ namespace sal {
                 }
             }
 
-            // remove disconnected connections
+            // Remove disconnected connections
             for (auto it = _connections.begin(); it != _connections.end();) {
                 if (!it->_connected) {
                     it = _connections.erase(it);
                 } else {
                     ++it;
                 }
+            }
+
+            // Create one event copy for all waiting coroutines
+            std::shared_ptr<const T> sharedEvent;
+
+            for (const auto &waiter : waiters) {
+                if (!waiter->_active) {
+                    continue;
+                }
+
+                if (!sharedEvent) {
+                    sharedEvent = std::make_shared<T>(event);
+                }
+
+                waiter->_event = sharedEvent;
+                waiter->_active = false;
+                waiter->_handle.resume();
             }
         }
 
@@ -136,6 +208,7 @@ namespace sal {
     private:
         Vector<ConnectionData> _connections;
         SizeT _connectionIndex = 0;
+        std::shared_ptr<WaitState> _waitState = std::make_shared<WaitState>();
 
         friend class Connection<T>;
     };

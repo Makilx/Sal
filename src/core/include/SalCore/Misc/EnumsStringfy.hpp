@@ -444,7 +444,6 @@ namespace sal {
         });
 
     // RunService
-
     Sal_Stringify(
         RunPriority, switch (t) {
             case sal::RunPriority::First:
@@ -458,4 +457,17 @@ namespace sal {
             case sal::RunPriority::Last:
                 return "Last";
         });
+
+    // Mesh3D
+    Sal_Stringify(Shape3D, switch (t) {
+        case sal::Shape3D::Block :
+            return "Block";
+        case sal::Shape3D::Ball:
+            return "Ball";
+        case sal::Shape3D::Wedge:
+            return "Wedge";
+        case sal::Shape3D::CornerWedge:
+            return "CornerWedge";
+        case sal::Shape3D::Cylinder:
+            return "Cylinder"; });
 }

@@ -248,6 +248,15 @@ namespace sal {
         Render = 3000,
         Last = 5000
     };
+
+    // Mesh3D
+    enum class Shape3D {
+        Block = 0,
+        Wedge,
+        CornerWedge,
+        Ball,
+        Cylinder
+    };
 }
 
 #include "EnumsStringfy.hpp" // IWYU pragma: keep

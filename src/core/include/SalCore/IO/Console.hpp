@@ -118,8 +118,13 @@ namespace sal {
                 return "00:00:00";
             }
 
+            const auto len = std::chrono::system_clock::now().time_since_epoch();
+            const auto mili = std::chrono::duration_cast<std::chrono::milliseconds>(len).count() % 1000;
+
             StringStream stream;
-            stream << std::put_time(localTime, "%H:%M:%S");
+
+            stream << std::put_time(localTime, "%H:%M:%S") << ":"
+                   << std::setfill('0') << std::setw(3) << mili;
 
             return stream.str();
         }

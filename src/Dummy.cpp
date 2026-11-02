@@ -9,7 +9,7 @@ int main() {
     windowService.SetWindowTitle("Sal Window");
 
     RunService &runService = dataModel.GetService<RunService>();
-    runService.SetMaxFramerate(1);
+    runService.SetMaxFramerate(0);
 
     InputService &inputService = dataModel.GetService<InputService>();
     bool inFullscreen = false;

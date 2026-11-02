@@ -14,8 +14,8 @@ namespace sal {
         void Stop();
 
         template <typename T>
-            requires(std::is_base_of_v<Service, T> &&
-                     !std::is_same_v<Service, T>)
+        requires(std::is_base_of_v<Service, T> &&
+                 !std::is_same_v<Service, T>)
         T &GetService() const {
             for (const UniquePtr<Service> &service : _loadedServices) {
                 if (T *cast = dynamic_cast<T *>(service.get())) {
@@ -27,9 +27,7 @@ namespace sal {
                 "DataModel invariant violated: service not found.");
         }
 
-    private:
-        void Initialize();
-        void Terminate();
+        TaskScheduler &Task() { return _sheduler; }
 
     private:
         bool _initialized = false;
@@ -38,8 +36,18 @@ namespace sal {
         int _targetFramerate = 144;
         void *_backendFactory = nullptr;
 
+        // scheduler
+        TaskScheduler _sheduler;
+
         // components
         struct ObjectHandles;
         UniquePtr<ObjectHandles> _handles;
+
+        void Initialize();
+        void Terminate();
+
+        void *GetAudio() const;
+        void *GetWindow() const;
+        void *GetRenderer() const;
     };
 }

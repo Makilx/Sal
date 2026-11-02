@@ -4,6 +4,8 @@ add_library(
 
   src/IO/File.cpp
   src/Type/Convert.cpp
+  src/Task/Task.cpp
+  src/Task/TaskScheduler.cpp
 )
 
 # Include

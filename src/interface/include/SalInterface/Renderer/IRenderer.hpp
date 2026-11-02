@@ -3,12 +3,12 @@
 #include <SalCore/Core.hpp>
 #include <SalCore/Misc/Enums.hpp>
 #include <SalInterface/Window/IWindow.hpp>
-#include <SalInterface/Renderer/Material.hpp>
+#include <SalInterface/Renderer/MaterialConfig.hpp>
 #include <SalInterface/Renderer/IMesh.hpp>
 
 namespace sal::interface {
     struct RenderCommand {
-        Material *Material = nullptr;
+        MaterialConfig *Material = nullptr;
         IMesh *Mesh = nullptr;
         Vector<Matrix4> Transforms;
         bool Instanced = false;

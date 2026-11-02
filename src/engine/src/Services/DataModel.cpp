@@ -1,4 +1,4 @@
-#include <SalEngine/DataModel/DataModel.hpp>
+#include <SalEngine/Services/DataModel.hpp>
 #include <SalEngine/Services/WindowService.hpp>
 #include <SalEngine/Services/RunService.hpp>
 #include <SalEngine/Services/InputService.hpp>
@@ -158,4 +158,17 @@ namespace sal {
 
         _initialized = false;
     }
+
+    void *DataModel::GetAudio() const {
+        return _handles->_audioHandle.get();
+    }
+
+    void *DataModel::GetWindow() const {
+        return _handles->_windowHandle.get();
+    }
+
+    void *DataModel::GetRenderer() const {
+        return _handles->_rendererHandle.get();
+    }
+
 }

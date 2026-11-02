@@ -86,4 +86,20 @@ namespace sal {
     };
 
     Sal_Stringify_Prebuilt(RenderStepedEvent);
+
+    // Instance
+    struct PropertyChangedEvent final : public Event {
+        String ToString() const override { return Property; }
+        String Property;
+    };
+
+    Sal_Stringify_Prebuilt(PropertyChangedEvent);
+
+    class Instance;
+    struct InstanceEvent final : public Event {
+        String ToString() const override { return sal::ToString(Instance); }
+        Instance *Instance;
+    };
+
+    Sal_Stringify_Prebuilt(InstanceEvent);
 }

@@ -11,6 +11,7 @@
 
 // Type
 #include <SalCore/Type/Convert.hpp>
+#include <SalCore/Type/Material.hpp>
 
 // Math
 #include <SalCore/Math/Math.hpp>
@@ -28,3 +29,7 @@
 // Misc
 #include <SalCore/Misc/Enums.hpp>
 #include <SalCore/Misc/Events.hpp>
+
+// Task
+#include <SalCore/Task/Task.hpp>
+#include <SalCore/Task/TaskScheduler.hpp>

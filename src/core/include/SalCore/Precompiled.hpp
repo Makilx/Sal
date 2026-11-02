@@ -25,6 +25,9 @@
 #include <thread>        // IWYU pragma: keep
 #include <chrono>        // IWYU pragma: keep
 #include <variant>       // IWYU pragma: keep
+#include <coroutine>     // IWYU pragma: keep
+#include <exception>     // IWYU pragma: keep
+#include <utility>       // IWYU pragma: keep
 
 // Typedef
 namespace sal {
