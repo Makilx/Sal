@@ -1,8 +1,8 @@
 #include <SalEngine/Services/InputService.hpp>
+#include <SalEngine/Services/DataModel.hpp>
+#include <SalEngine/Services/RunService.hpp>
 #include <SalInterface/Input/IInput.hpp>
 #include <SalInterface/Window/IWindow.hpp>
-#include <SalEngine/DataModel/DataModel.hpp>
-#include <SalEngine/Services/RunService.hpp>
 
 namespace sal {
     Vector2 InputService::GetMousePosition() const {

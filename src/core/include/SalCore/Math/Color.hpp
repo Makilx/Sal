@@ -42,6 +42,18 @@ namespace sal {
                         const float A = 1.0f) noexcept
             : R(R), G(G), B(B), A(A) {}
 
+        // Operators
+        bool operator==(const Color &other) const {
+            return R == other.R &&
+                   G == other.G &&
+                   B == other.B &&
+                   A == other.A;
+        }
+
+        bool operator!=(const Color &other) const {
+            return !(*this == other);
+        }
+
         // Factory Methods
         static constexpr Color FromRGB255(const float value = 255.0f) noexcept {
             const float normalized = Clamp01(value / 255.0f);

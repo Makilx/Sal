@@ -63,8 +63,16 @@ namespace sal {
         runService.BindToUpdate(static_cast<SizeT>(RunPriority::Update),
                                 [renderer](double) { renderer->BeginFrame(); });
 
+        runService.BindToUpdate(static_cast<SizeT>(RunPriority::Update) + 1,
+                                [this](double) { if (_workspace){ _workspace->OnDraw(); } });
+
         runService.BindToUpdate(static_cast<SizeT>(RunPriority::Render) - 1,
                                 [renderer](double) { renderer->EndFrame(); });
+
+        // workspace
+        if (_workspace) {
+            _workspace->Initialize(this);
+        }
 
         while (_running && !window->ShouldClose()) {
             // update
@@ -84,6 +92,12 @@ namespace sal {
             return;
         }
 
+        // workspace
+        if (_workspace) {
+            _workspace->Terminate();
+        }
+
+        Console::Break();
         Console::Divider("Service termination");
         for (UniquePtr<Service> &service : _loadedServices) {
             Console::Print("Terminating service:", service->ToString());
@@ -171,4 +185,19 @@ namespace sal {
         return _handles->_rendererHandle.get();
     }
 
+    void DataModel::SetWorkspace(Workspace *workspace) {
+        if (_running) {
+            if (_workspace) {
+                _workspace->Terminate();
+            }
+
+            _workspace = workspace;
+
+            if (_workspace) {
+                _workspace->Initialize(this);
+            }
+        } else {
+            _workspace = workspace;
+        }
+    }
 }

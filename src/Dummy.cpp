@@ -23,6 +23,9 @@ int main() {
         }
     });
 
+    Workspace3D *workspace = Instance::New<Workspace3D>();
+
+    dataModel.SetWorkspace(workspace);
     dataModel.Run();
 
     return 0;

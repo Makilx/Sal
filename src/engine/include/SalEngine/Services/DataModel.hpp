@@ -2,6 +2,7 @@
 
 #include <SalCore/Core.hpp>
 #include <SalEngine/Services/Service.hpp>
+#include <SalEngine/Instances/Workspace.hpp>
 
 namespace sal {
     class DataModel {
@@ -29,12 +30,21 @@ namespace sal {
 
         TaskScheduler &Task() { return _sheduler; }
 
+        Sal_PropertyG(Workspace *, Workspace, _workspace);
+        void SetWorkspace(Workspace *workspace);
+
+        String ToString() const { return "DataModel"; }
+
     private:
         bool _initialized = false;
         bool _running = false;
-        Vector<UniquePtr<Service>> _loadedServices;
-        int _targetFramerate = 144;
+
         void *_backendFactory = nullptr;
+
+        Vector<UniquePtr<Service>> _loadedServices;
+
+        // workspace
+        Workspace *_workspace = nullptr;
 
         // scheduler
         TaskScheduler _sheduler;
@@ -50,4 +60,6 @@ namespace sal {
         void *GetWindow() const;
         void *GetRenderer() const;
     };
+
+    Sal_Stringify_Prebuilt(DataModel);
 }

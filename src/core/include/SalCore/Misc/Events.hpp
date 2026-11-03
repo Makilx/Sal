@@ -102,4 +102,10 @@ namespace sal {
     };
 
     Sal_Stringify_Prebuilt(InstanceEvent);
+
+    class Workspace;
+    struct OwnershipChangedEvent final : public Event {
+        String ToString() const override { return sal::ToString(Owner); }
+        Workspace *Owner;
+    };
 }

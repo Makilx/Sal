@@ -1,6 +1,6 @@
 #include <SalEngine/Services/RunService.hpp>
-#include <SalEngine/DataModel/DataModel.hpp>
 #include <SalEngine/Services/WindowService.hpp>
+#include <SalEngine/Services/DataModel.hpp>
 #include <SalInterface/Window/IWindow.hpp>
 
 double GetTimeDouble() {

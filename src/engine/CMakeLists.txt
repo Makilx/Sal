@@ -2,15 +2,14 @@
 add_library(
   Sal_Engine
 
-  src/DataModel.cpp
+  src/Services/DataModel.cpp
 
   src/Services/WindowService.cpp
   src/Services/RunService.cpp
   src/Services/InputService.cpp
-  src/Services/Workspace/Workspace.cpp
-  src/Services/Workspace/Workspace3D.cpp
 
-  src/Instances/Workspace3D/Part3D.cpp
+  src/Instances/Instance.cpp
+  src/Instances/Workspace.cpp
 )
 
 # Include

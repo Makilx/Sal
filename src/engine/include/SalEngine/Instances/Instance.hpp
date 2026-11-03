@@ -2,13 +2,18 @@
 
 #include <SalCore/Core.hpp>
 
-#define Sal_Property_GSetter(type, name, param, builtin) \
-    type Get##name() const { return builtin; }           \
-    void Set##name(type param) {                         \
-        this->builtin = param;                           \
-        PropertyChangedEvent e;                          \
-        e.Property = #name;                              \
-        PropertyChanged.Fire(e);                         \
+#define Sal_PropertyG(type, name, built) \
+    type Get##name() const { return built; }
+
+#define Sal_PropertyGS(type, name, arg, built) \
+    type Get##name() const { return built; }   \
+    void Set##name(type arg) {                 \
+        if (arg == built)                      \
+            return;                            \
+        built = arg;                           \
+        PropertyChangedEvent e;                \
+        e.Property = #name;                    \
+        PropertyChanged.Fire(e);               \
     }
 
 namespace sal {
@@ -19,39 +24,63 @@ namespace sal {
 
     class Instance {
     public:
-        Instance();
+        Instance(const String &name = "Instance", Instance *parent = nullptr) : _name(name) { SetParent(parent); }
         virtual ~Instance() = default;
 
-        virtual String GetClassName() const { return "Instance"; }
-        String ToString() const { return GetName(); }
+        // property
+        Sal_PropertyGS(String, Name, name, _name);
 
-        void SetName(const String &name);
+        // ownership
+        Sal_PropertyG(Workspace *, Owner, _owner);
+        Sal_PropertyG(Instance *, Parent, _parent);
+        Sal_PropertyG(Instances, Children, _children);
+        Instances GetAncestors() const {
+            Instances ancestors;
+
+            Instance *current = _parent;
+
+            while (current) {
+                ancestors.push_back(current);
+                current = current->_parent;
+            }
+
+            return ancestors;
+        }
+        Instances GetDescendants() const {
+            Instances descendants;
+
+            for (Instance *child : _children) {
+                descendants.push_back(child);
+
+                Instances childDescendants = child->GetDescendants();
+
+                descendants.insert(
+                    descendants.end(),
+                    childDescendants.begin(),
+                    childDescendants.end());
+            }
+
+            return descendants;
+        }
+
         void SetParent(Instance *parent);
+        void ClearAllChildren();
 
-        SizeT GetUniqueID() const { return _uniqueID; }
-        String GetName() const { return _name; }
-        Workspace *GetOwner() const { return _owner; }
-
-        Instance *GetParent() const { return _parent; }
-        Instances GetChildren() const { return _children; }
-        Instances GetAncestors() const;
-        Instances GetDescendants() const;
-
+        // search
         Instance *FindFirstChild(const String &name) const {
-            for (Instance *target : _children) {
-                if (target->_name == name) {
-                    return target;
+            for (Instance *child : _children) {
+                if (child->GetName() == name) {
+                    return child;
                 }
             }
 
             return nullptr;
         }
-
         Instance *FindFirstAncestor(const String &name) const {
             Instance *current = _parent;
 
             while (current) {
-                if (current->_name == name) {
+                if (current->GetName() == name) {
                     return current;
                 }
 
@@ -60,56 +89,16 @@ namespace sal {
 
             return nullptr;
         }
-
         Instance *FindFirstDescendant(const String &name) const {
-            for (Instance *target : _children) {
-                if (target->_name == name) {
-                    return target;
+            for (Instance *child : _children) {
+                if (child->GetName() == name) {
+                    return child;
                 }
 
-                if (Instance *descendant = target->FindFirstDescendant(name)) {
-                    return descendant;
-                }
-            }
+                Instance *found = child->FindFirstDescendant(name);
 
-            return nullptr;
-        }
-
-        template <typename T> requires(std::derived_from<T, Instance> && !std::is_same_v<T, Instance>)
-        T *FindFirstChildWhichIsA() const {
-            for (Instance *inst : _children) {
-                if (T *target = inst->As<T>()) {
-                    return target;
-                }
-            }
-
-            return nullptr;
-        }
-
-        template <typename T> requires(std::derived_from<T, Instance> && !std::is_same_v<T, Instance>)
-        T *FindFirstAncestorWhichIsA() const {
-            Instance *current = _parent;
-
-            while (current) {
-                if (T *target = current->As<T>()) {
-                    return target;
-                }
-
-                current = current->_parent;
-            }
-
-            return nullptr;
-        }
-
-        template <typename T> requires(std::derived_from<T, Instance> && !std::is_same_v<T, Instance>)
-        T *FindFirstDescendantWhichIsA() const {
-            for (Instance *inst : _children) {
-                if (T *target = inst->As<T>()) {
-                    return target;
-                }
-
-                if (T *target = inst->FindFirstDescendantWhichIsA<T>()) {
-                    return target;
+                if (found) {
+                    return found;
                 }
             }
 
@@ -117,9 +106,87 @@ namespace sal {
         }
 
         template <typename T> requires(std::derived_from<T, Instance>)
-        bool IsA() const {
-            return As<T>() != nullptr;
+        T *FindFirstChildWhichIsA() {
+            for (Instance *child : _children) {
+                if (T *instance = child->As<T>()) {
+                    return instance;
+                }
+            }
+
+            return nullptr;
         }
+        template <typename T> requires(std::derived_from<T, Instance>)
+        T *FindFirstAncestorWhichIsA() {
+            Instance *current = _parent;
+
+            while (current) {
+                if (T *instance = current->As<T>()) {
+                    return instance;
+                }
+
+                current = current->_parent;
+            }
+
+            return nullptr;
+        }
+        template <typename T> requires(std::derived_from<T, Instance>)
+        T *FindFirstDescendantWhichIsA() {
+            for (Instance *child : _children) {
+                if (T *instance = child->As<T>()) {
+                    return instance;
+                }
+
+                if (T *instance = child->FindFirstDescendantWhichIsA<T>()) {
+                    return instance;
+                }
+            }
+
+            return nullptr;
+        }
+
+        bool HasChild(Instance *child) {
+            if (!child) {
+                return false;
+            }
+
+            return std::find(_children.begin(), _children.end(), child) != _children.end();
+        }
+        bool HasAncestor(Instance *ancestor) {
+            if (!ancestor) {
+                return false;
+            }
+
+            Instance *current = _parent;
+
+            while (current) {
+                if (current == ancestor) {
+                    return true;
+                }
+
+                current = current->_parent;
+            }
+
+            return false;
+        }
+        bool HasDescendant(Instance *descendant) {
+            if (!descendant) {
+                return false;
+            }
+
+            for (Instance *child : _children) {
+                if (child == descendant || child->HasDescendant(descendant)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // type
+        virtual String GetClassName() const { return "Instance"; }
+
+        template <typename T> requires(std::derived_from<T, Instance>)
+        bool IsA() const { return As<T>() != nullptr; }
 
         template <typename T> requires(std::derived_from<T, Instance>)
         T *As() {
@@ -131,33 +198,71 @@ namespace sal {
             return dynamic_cast<const T *>(this);
         }
 
+        // lifetime + misc
         Instance *Clone();
-
         void Destroy();
 
-    public:
+        // events
         Signal<PropertyChangedEvent> PropertyChanged;
+        Signal<OwnershipChangedEvent> OwnershipChanged;
         Signal<InstanceEvent> AncestryChanged;
         Signal<InstanceEvent> ChildAdded;
         Signal<InstanceEvent> ChildRemoved;
-        Signal<BlankEvent> Destroying;
+
+        // stringfy
+        String ToString() const { return _name; }
+
+        // global
+        template <typename T> requires(std::derived_from<T, Instance> && !std::is_same_v<T, Instance>)
+        static T *New() {
+            if (IS_TERMINATING) {
+                return nullptr;
+            }
+            UniquePtr<T> instance = std::make_unique<T>();
+            T *ptr = instance.get();
+            ALL_INSTANCES.push_back(std::move(instance));
+            return ptr;
+        }
+
+        static void Terminate() {
+            IS_TERMINATING = true;
+            while (!ALL_INSTANCES.empty()) {
+                Instance *instance = ALL_INSTANCES.back().get();
+                instance->Destroy();
+
+                if (!ALL_INSTANCES.empty() &&
+                    ALL_INSTANCES.back().get() == instance) {
+                    break;
+                }
+            }
+        }
 
     private:
-        virtual bool OnChildAdded(Instance *child) { return true; }
-        virtual bool OnChildRemoved(Instance *child) { return true; }
-        virtual bool OnDestroy() { return true; }
-        virtual Instance *OnClone() { return nullptr; }
+        String _name = "";
+
+        Workspace *_owner = nullptr;
+        Instance *_parent = nullptr;
+        Instances _children;
+
+        bool _destroying = false;
+        bool _destroyed = false;
+
+        static Vector<UniquePtr<Instance>> ALL_INSTANCES;
+        static bool IS_TERMINATING;
 
         bool AddChild(Instance *child);
         bool RemoveChild(Instance *child);
 
-    private:
-        String _name = "";
-        SizeT _uniqueID = 0;
-        Instances _children;
-        Instance *_parent = nullptr;
-        Workspace *_owner = nullptr;
+        virtual bool OnDestroy() { return true; }
+        virtual bool OnChildAdded(Instance *child) { return true; }
+        virtual bool OnChildRemoved(Instance *child) { return true; }
+        virtual Instance *OnClone() { return new Instance(_name); }
 
-        static SizeT ID_COUNT;
+        friend class Workspace;
     };
+
+    inline Vector<UniquePtr<Instance>> Instance::ALL_INSTANCES;
+    inline bool Instance::IS_TERMINATING = false;
+
+    Sal_Stringify_Prebuilt(Instance);
 }

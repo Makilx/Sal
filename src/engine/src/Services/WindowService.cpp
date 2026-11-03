@@ -1,8 +1,8 @@
 #include <SalEngine/Services/WindowService.hpp>
+#include <SalEngine/Services/DataModel.hpp>
+#include <SalEngine/Services/RunService.hpp>
 #include <SalInterface/Window/IWindow.hpp>
 #include <SalBackend/BackendFactory.hpp>
-#include <SalEngine/DataModel/DataModel.hpp>
-#include <SalEngine/Services/RunService.hpp>
 
 namespace sal {
     WindowService::WindowService(DataModel &dataModel, void *handle)
