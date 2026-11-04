@@ -25,6 +25,13 @@ int main() {
 
     Workspace3D *workspace = Instance::New<Workspace3D>();
 
+    Part3D *part = Instance::New<Part3D>();
+    part->SetParent(workspace);
+
+    Camera3D *camera = Instance::New<Camera3D>();
+    workspace->SetCurrentCamera(camera);
+    camera->SetPosition(camera->GetPosition() * CFrame(0, 0, 2));
+
     dataModel.SetWorkspace(workspace);
     dataModel.Run();
 

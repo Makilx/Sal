@@ -10,6 +10,9 @@ add_library(
 
   src/Instances/Instance.cpp
   src/Instances/Workspace.cpp
+
+  src/Instances/3D/Workspace3D.cpp
+  src/Instances/3D/Part3D.cpp
 )
 
 # Include

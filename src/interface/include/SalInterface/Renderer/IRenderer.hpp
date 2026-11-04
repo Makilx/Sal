@@ -2,16 +2,29 @@
 
 #include <SalCore/Core.hpp>
 #include <SalCore/Misc/Enums.hpp>
+
 #include <SalInterface/Window/IWindow.hpp>
-#include <SalInterface/Renderer/MaterialConfig.hpp>
 #include <SalInterface/Renderer/IMesh.hpp>
+#include <SalInterface/Renderer/ITexture.hpp>
+#include <SalInterface/Renderer/IShaders.hpp>
 
 namespace sal::interface {
+    struct RenderInstance {
+        Matrix4 Model;
+        Material Material;
+        ITexture *Albedo = nullptr;
+    };
+
+    struct InstanceTextureStackData {
+        uint32_t Albedo = 0;
+    };
+
     struct RenderCommand {
-        MaterialConfig *Material = nullptr;
         IMesh *Mesh = nullptr;
-        Vector<Matrix4> Transforms;
-        bool Instanced = false;
+        IShaderProgram *Shader = nullptr;
+
+        Vector<RenderInstance> Instance;
+        Vector<InstanceTextureStackData> InstanceStackData;
     };
 
     struct RenderStatus {
@@ -29,7 +42,9 @@ namespace sal::interface {
         Vector2 Size = Vector2::One;
         bool Scale = true;
     };
+}
 
+namespace sal::interface {
     class IRenderer {
     public:
         IRenderer(RendererAPI api) : _renderAPI(api) {}

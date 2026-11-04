@@ -22,6 +22,10 @@ namespace sal {
     protected:
         Sal_PropertyG(Instances, RegisteredInstances, _registeredInstances);
 
+        void *GetAudio() const;
+        void *GetWindow() const;
+        void *GetRenderer() const;
+
     private:
         bool _loaded = false;
         DataModel *_dataModel = nullptr;
@@ -36,6 +40,8 @@ namespace sal {
         virtual void OnInitialization(DataModel *owner) = 0;
         virtual void OnTerminate() = 0;
         virtual void OnDraw() = 0;
+        virtual void OnInstanceRegister(Instance *instance) {}
+        virtual void OnInstanceUnregister(Instance *instance) {}
 
         friend class Instance;
         friend class DataModel;

@@ -1,4 +1,7 @@
+#include <SalInterface/Renderer/IRenderer.hpp>
+
 #include <SalBackend/Rendering/OpenGL/OpenGLMesh.hpp>
+
 #include <glad/glad.h>
 
 namespace sal::backend {
@@ -7,11 +10,14 @@ namespace sal::backend {
             Destroy();
         }
 
-        glCreateVertexArrays(1, &_vao);
-        glCreateBuffers(1, &_vbo);
-        glCreateBuffers(1, &_ibo);
+        glGenVertexArrays(1, &_vao);
+        glGenBuffers(1, &_vbo);
+        glGenBuffers(1, &_ibo);
+        glGenBuffers(1, &_instanceVBO);
+        glGenBuffers(1, &_instanceStackVBO);
 
-        if (_vao == 0 || _vbo == 0 || _ibo == 0) {
+        if (_vao == 0 || _vbo == 0 || _ibo == 0 ||
+            _instanceVBO == 0 || _instanceStackVBO == 0) {
             Destroy();
             return false;
         }
@@ -21,26 +27,85 @@ namespace sal::backend {
         // Vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-        // Position
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, sizeof(interface::Vertex),
             reinterpret_cast<void *>(offsetof(interface::Vertex, Position)));
 
-        // Normal
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(
             1, 3, GL_FLOAT, GL_FALSE, sizeof(interface::Vertex),
             reinterpret_cast<void *>(offsetof(interface::Vertex, Normal)));
 
-        // Texture UV
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(
             2, 2, GL_FLOAT, GL_FALSE, sizeof(interface::Vertex),
             reinterpret_cast<void *>(offsetof(interface::Vertex, TextureUV)));
 
-        // Associate the index buffer with this VAO.
+        // Index buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+
+        // Instance buffer
+        glBindBuffer(GL_ARRAY_BUFFER, _instanceVBO);
+
+        constexpr GLsizei instanceStride =
+            static_cast<GLsizei>(sizeof(interface::RenderInstance));
+
+        // Model matrix
+        for (GLuint i = 0; i < 4; ++i) {
+            GLuint location = 3 + i;
+
+            glEnableVertexAttribArray(location);
+            glVertexAttribPointer(
+                location, 4, GL_FLOAT, GL_FALSE, instanceStride,
+                reinterpret_cast<void *>(
+                    offsetof(interface::RenderInstance, Model) +
+                    sizeof(float) * 4 * i));
+
+            glVertexAttribDivisor(location, 1);
+        }
+
+        // Material tint
+        glEnableVertexAttribArray(7);
+        glVertexAttribPointer(
+            7, 4, GL_FLOAT, GL_FALSE, instanceStride,
+            reinterpret_cast<void *>(
+                offsetof(interface::RenderInstance, Material) +
+                offsetof(Material, Tint)));
+
+        glVertexAttribDivisor(7, 1);
+
+        // Metallic
+        glEnableVertexAttribArray(8);
+        glVertexAttribPointer(
+            8, 1, GL_FLOAT, GL_FALSE, instanceStride,
+            reinterpret_cast<void *>(
+                offsetof(interface::RenderInstance, Material) +
+                offsetof(Material, Metallic)));
+
+        glVertexAttribDivisor(8, 1);
+
+        // Roughness
+        glEnableVertexAttribArray(9);
+        glVertexAttribPointer(
+            9, 1, GL_FLOAT, GL_FALSE, instanceStride,
+            reinterpret_cast<void *>(
+                offsetof(interface::RenderInstance, Material) +
+                offsetof(Material, Roughness)));
+
+        glVertexAttribDivisor(9, 1);
+
+        // Instance texture-stack data
+        glBindBuffer(GL_ARRAY_BUFFER, _instanceStackVBO);
+
+        glEnableVertexAttribArray(10);
+        glVertexAttribIPointer(
+            10, 1, GL_UNSIGNED_INT,
+            sizeof(interface::InstanceTextureStackData),
+            reinterpret_cast<void *>(
+                offsetof(interface::InstanceTextureStackData, Albedo)));
+
+        glVertexAttribDivisor(10, 1);
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -65,9 +130,19 @@ namespace sal::backend {
             glDeleteBuffers(1, &_ibo);
         }
 
+        if (_instanceVBO != 0) {
+            glDeleteBuffers(1, &_instanceVBO);
+        }
+
+        if (_instanceStackVBO != 0) {
+            glDeleteBuffers(1, &_instanceStackVBO);
+        }
+
         _vao = 0;
         _vbo = 0;
         _ibo = 0;
+        _instanceVBO = 0;
+        _instanceStackVBO = 0;
 
         _created = false;
         _verticesCount = 0;
@@ -124,14 +199,16 @@ namespace sal::backend {
         _indicesCount = indices.size();
     }
 
-    void OpenGLMesh::SetInstanceTransforms(const Vector<Matrix4> &transforms) {
+    void OpenGLMesh::SetInstanceTransforms(
+        const Vector<interface::RenderInstance> &instances) {
+
         if (!_created) {
             return;
         }
 
-        if (transforms.size() >
+        if (instances.size() >
             static_cast<SizeT>(std::numeric_limits<GLsizeiptr>::max() /
-                               sizeof(Matrix4))) {
+                               sizeof(interface::RenderInstance))) {
             return;
         }
 
@@ -139,8 +216,35 @@ namespace sal::backend {
 
         glBufferData(
             GL_ARRAY_BUFFER,
-            static_cast<GLsizeiptr>(transforms.size() * sizeof(Matrix4)),
-            transforms.empty() ? nullptr : transforms.data(), GL_STREAM_DRAW);
+            static_cast<GLsizeiptr>(
+                instances.size() * sizeof(interface::RenderInstance)),
+            instances.empty() ? nullptr : instances.data(),
+            GL_STREAM_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    void OpenGLMesh::SetInstanceStackData(
+        const Vector<interface::InstanceTextureStackData> &stackData) {
+
+        if (!_created) {
+            return;
+        }
+
+        if (stackData.size() >
+            static_cast<SizeT>(std::numeric_limits<GLsizeiptr>::max() /
+                               sizeof(interface::InstanceTextureStackData))) {
+            return;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, _instanceStackVBO);
+
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            static_cast<GLsizeiptr>(
+                stackData.size() * sizeof(interface::InstanceTextureStackData)),
+            stackData.empty() ? nullptr : stackData.data(),
+            GL_STREAM_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }

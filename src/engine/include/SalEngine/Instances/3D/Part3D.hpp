@@ -5,8 +5,6 @@
 namespace sal {
     class Part3D : public Instance {
     public:
-        Part3D();
-
         Sal_PropertyGS(CFrame, Position, position, _position);
         Sal_PropertyGS(Vector3, Size, size, _size);
         Sal_PropertyGS(Shape3D, Shape, shape, _shape);

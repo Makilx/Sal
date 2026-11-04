@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SalEngine/Instances/3D/Workspace3D.hpp"
 #include <SalCore/Core.hpp>
 #include <SalEngine/Services/Service.hpp>
 #include <SalEngine/Instances/Workspace.hpp>
@@ -59,6 +60,8 @@ namespace sal {
         void *GetAudio() const;
         void *GetWindow() const;
         void *GetRenderer() const;
+
+        friend class Workspace;
     };
 
     Sal_Stringify_Prebuilt(DataModel);

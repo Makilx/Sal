@@ -1,8 +1,75 @@
-#include <SalBackend/Rendering/OpenGL/OpenGLRenderer.hpp>
 #include <SalBackend/Rendering/OpenGL/OpenGLMesh.hpp>
 #include <SalBackend/Rendering/OpenGL/OpenGLShaders.hpp>
 #include <SalBackend/Rendering/OpenGL/OpenGLTexture.hpp>
+#include <SalBackend/Rendering/OpenGL/OpenGLRenderer.hpp>
+
 #include <glad/glad.h>
+
+namespace sal::backend {
+    void BuildInstanceTextureStack(
+        const Dictionary<interface::ITexture *, uint32_t> &textureLayers,
+        uint32_t layerCount, unsigned int _instancedTextureStack) {
+        if (layerCount == 0) {
+            return;
+        }
+
+        constexpr GLsizei width = 1024;
+        constexpr GLsizei height = 1024;
+
+        glBindTexture(GL_TEXTURE_2D_ARRAY, _instancedTextureStack);
+
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexImage3D(
+            GL_TEXTURE_2D_ARRAY,
+            0,
+            GL_RGBA8,
+            width,
+            height,
+            static_cast<GLsizei>(layerCount),
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            nullptr);
+
+        Vector<uint8_t> whitePixels(width * height * 4, 255);
+
+        glTexSubImage3D(
+            GL_TEXTURE_2D_ARRAY,
+            0,
+            0, 0, 0,
+            width, height, 1,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            whitePixels.data());
+
+        for (const auto &[texture, layer] : textureLayers) {
+            if (!texture) {
+                continue;
+            }
+
+            auto *openGLTexture = dynamic_cast<OpenGLTexture *>(texture);
+
+            if (!openGLTexture) {
+                continue;
+            }
+
+            glCopyImageSubData(
+                openGLTexture->GetHandle(),
+                GL_TEXTURE_2D,
+                0, 0, 0, 0,
+                _instancedTextureStack,
+                GL_TEXTURE_2D_ARRAY,
+                0, 0, 0, static_cast<GLint>(layer),
+                width, height, 1);
+        }
+
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    }
+}
 
 namespace sal::backend {
     bool OpenGLRenderer::Initialize(interface::IWindow *window) {
@@ -28,6 +95,9 @@ namespace sal::backend {
         _frameCommands.clear();
         _renderStatus = {};
         _resources.clear();
+
+        // create stack
+        glGenTextures(1, &_instancedTextureStack);
 
         // set window
         _currentWindow = window;
@@ -86,6 +156,9 @@ namespace sal::backend {
         _inFrame = false;
         _renderStatus = {};
 
+        glDeleteTextures(1, &_instancedTextureStack);
+        _instancedTextureStack = 0;
+
         // clear connections
         _resizedConnection.Disconnect();
         _resizedConnection = {};
@@ -118,72 +191,107 @@ namespace sal::backend {
 
         // rendering
         for (interface::RenderCommand &command : _frameCommands) {
-            // command check
-            if ((!command.Material || !command.Material->Shaders ||
-                 !command.Material->Shaders->IsCreated()) ||
-                (!command.Mesh || !command.Mesh->IsCreated()) ||
-                command.Transforms.empty()) {
+            // assert
+            if (!command.Mesh) {
+                Console::Warn("Command mesh is not present");
                 continue;
             }
 
-            // shaders
-            OpenGLShaderProgram *shaders =
-                static_cast<OpenGLShaderProgram *>(command.Material->Shaders);
-
-            Material targetMaterial = (command.Material->CustomMaterial != nullptr) ? *command.Material->CustomMaterial : interface::MaterialConfig::DEFAULT_MATERIAL;
-
-            glUseProgram(shaders->GetHandle());
-            shaders->Set("Sal_TintColor", targetMaterial.Tint);
-
-            // textures
-            bool hasTexture = command.Material->Texture &&
-                              command.Material->Texture->IsCreated();
-            shaders->Set("Sal_HasTexture", hasTexture);
-
-            if (hasTexture) {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, static_cast<OpenGLTexture *>(
-                                                 command.Material->Texture)
-                                                 ->GetHandle());
-                shaders->Set("Sal_Texture_0", 0);
+            if (!command.Shader) {
+                Console::Warn("Command shader is not present");
+                continue;
             }
 
-            // instanced / normal drawing
-            OpenGLMesh *mesh = static_cast<OpenGLMesh *>(command.Mesh);
-            glBindVertexArray(mesh->GetHandle());
+            if (command.Instance.empty()) {
+                Console::Warn("No instances to draw");
+                continue;
+            }
 
-            if (command.Instanced) {
-                if (command.Transforms.empty()) {
-                    glBindVertexArray(0);
-                    continue;
+            // bind vao
+            OpenGLMesh *mesh = static_cast<OpenGLMesh *>(command.Mesh);
+            OpenGLShaderProgram *shaders = static_cast<OpenGLShaderProgram *>(command.Shader);
+
+            glBindVertexArray(mesh->GetHandle());
+            glUseProgram(shaders->GetHandle());
+
+            // draw instanced / normal
+            bool isInstanced = command.Instance.size() > 1;
+
+            if (isInstanced) {
+                // Collect textures.
+                Dictionary<interface::ITexture *, uint32_t> textureLayers;
+
+                uint32_t nextLayer = 1;
+
+                command.InstanceStackData.clear();
+                command.InstanceStackData.reserve(command.Instance.size());
+
+                for (const interface::RenderInstance &instance : command.Instance) {
+                    interface::InstanceTextureStackData stackData;
+
+                    if (instance.Albedo) {
+                        auto [it, inserted] = textureLayers.try_emplace(
+                            instance.Albedo,
+                            nextLayer);
+
+                        if (inserted) {
+                            nextLayer++;
+                        }
+
+                        stackData.Albedo = it->second;
+                    }
+
+                    command.InstanceStackData.push_back(stackData);
                 }
 
-                // Upload per-instance model matrices
-                mesh->SetInstanceTransforms(command.Transforms);
+                // Upload instance data.
+                mesh->SetInstanceTransforms(command.Instance);
+                mesh->SetInstanceStackData(command.InstanceStackData);
 
-                // Camera uniforms
-                shaders->Set("Sal_View", _renderView.View);
-                shaders->Set("Sal_Projection", _renderView.Projection);
+                // Build texture array.
+                BuildInstanceTextureStack(textureLayers, nextLayer, _instancedTextureStack);
 
+                // Bind texture array.
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, _instancedTextureStack);
+
+                shaders->Set("Sal_AlbedoStack", 0);
+
+                // Draw instanced.
                 glDrawElementsInstanced(
-                    GL_TRIANGLES, static_cast<GLsizei>(mesh->GetIndicesCount()),
-                    GL_UNSIGNED_INT, nullptr,
-                    static_cast<GLsizei>(command.Transforms.size()));
+                    GL_TRIANGLES,
+                    static_cast<GLsizei>(mesh->GetIndicesCount()),
+                    GL_UNSIGNED_INT,
+                    nullptr,
+                    static_cast<GLsizei>(command.Instance.size()));
 
-                _renderStatus.DrawCalls++;
                 _renderStatus.InstancedDrawCalls++;
+
             } else {
-                // A non-instanced command uses its first transform
-                shaders->Set("Sal_Model", command.Transforms.front());
-                shaders->Set("Sal_View", _renderView.View);
-                shaders->Set("Sal_Projection", _renderView.Projection);
+                // draw
+                for (interface::RenderInstance &instance : command.Instance) {
+                    // uniforms
+                    shaders->Set("Sal_Tint", instance.Material.Tint);
+                    shaders->Set("Sal_Metallic", instance.Material.Metallic);
+                    shaders->Set("Sal_Roughness", instance.Material.Roughness);
 
-                glDrawElements(GL_TRIANGLES,
-                               static_cast<GLsizei>(mesh->GetIndicesCount()),
-                               GL_UNSIGNED_INT, nullptr);
+                    // textures
+                    shaders->Set("Sal_Albedo", 0);
+                    shaders->Set("Sal_HasAlbedo", (instance.Albedo != nullptr) ? 1 : 0);
+                    if (instance.Albedo) {
+                        OpenGLTexture *texture = static_cast<OpenGLTexture *>(instance.Albedo);
+                        glActiveTexture(0);
+                        glBindTexture(GL_TEXTURE_2D, texture->GetHandle());
+                    }
 
-                _renderStatus.DrawCalls++;
+                    // draw
+                    glDrawElements(GL_TRIANGLES,
+                                   static_cast<GLsizei>(mesh->GetIndicesCount()),
+                                   GL_UNSIGNED_INT, nullptr);
+                }
             }
+
+            // unbind all
             glBindVertexArray(0);
         }
 
@@ -238,6 +346,22 @@ namespace sal::backend {
 
     void OpenGLRenderer::Draw(const interface::RenderCommand &command) {
         if (!_loaded || !_inFrame) {
+            Console::Warn("Out of frame drawing call");
+            return;
+        }
+
+        if (!command.Mesh) {
+            Console::Warn("Command mesh is not present");
+            return;
+        }
+
+        if (!command.Shader) {
+            Console::Warn("Command shader is not present");
+            return;
+        }
+
+        if (command.Instance.empty()) {
+            Console::Warn("No instances to draw");
             return;
         }
 

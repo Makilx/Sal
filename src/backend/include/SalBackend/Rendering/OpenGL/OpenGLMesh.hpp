@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SalInterface/Renderer/IMesh.hpp>
+#include <SalInterface/Renderer/IRenderer.hpp>
 
 namespace sal::backend {
     class OpenGLMesh final : public interface::IMesh {
@@ -17,10 +18,10 @@ namespace sal::backend {
 
         SizeT GetIndicesCount() const override { return _indicesCount; }
 
-    public:
         unsigned int GetHandle() const { return _vao; }
-        void SetInstanceTransforms(const Vector<Matrix4> &transforms);
         unsigned int GetInstanceBuffer() const { return _instanceVBO; }
+        void SetInstanceTransforms(const Vector<interface::RenderInstance> &instances);
+        void SetInstanceStackData(const Vector<interface::InstanceTextureStackData> &instances);
 
     private:
         bool _created = false;
@@ -31,5 +32,6 @@ namespace sal::backend {
         unsigned int _vbo = 0;
         unsigned int _ibo = 0;
         unsigned int _instanceVBO = 0;
+        unsigned int _instanceStackVBO = 0;
     };
 }

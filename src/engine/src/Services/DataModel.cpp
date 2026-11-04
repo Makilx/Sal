@@ -1,3 +1,4 @@
+#include "SalCore/IO/Console.hpp"
 #include <SalEngine/Services/DataModel.hpp>
 #include <SalEngine/Services/WindowService.hpp>
 #include <SalEngine/Services/RunService.hpp>
@@ -171,6 +172,7 @@ namespace sal {
         }
 
         _initialized = false;
+        Console::Warn("Terminating workspace");
     }
 
     void *DataModel::GetAudio() const {

@@ -1,3 +1,4 @@
+#include <SalEngine/Services/DataModel.hpp>
 #include <SalEngine/Instances/Workspace.hpp>
 
 namespace sal {
@@ -35,6 +36,8 @@ namespace sal {
         OwnershipChangedEvent oce;
         oce.Owner = this;
         instance->OwnershipChanged.Fire(oce);
+
+        OnInstanceRegister(instance);
     }
 
     void Workspace::UnregisterInstance(Instance *instance) {
@@ -44,6 +47,8 @@ namespace sal {
             return;
         }
 
+        OnInstanceUnregister(instance);
+
         instance->_owner = nullptr;
         _registeredInstances.erase(it);
 
@@ -51,4 +56,10 @@ namespace sal {
         oce.Owner = nullptr;
         instance->OwnershipChanged.Fire(oce);
     }
+
+    void *Workspace::GetAudio() const { return _dataModel ? _dataModel->GetAudio() : nullptr; }
+
+    void *Workspace::GetWindow() const { return _dataModel ? _dataModel->GetWindow() : nullptr; }
+
+    void *Workspace::GetRenderer() const { return _dataModel ? _dataModel->GetRenderer() : nullptr; }
 }

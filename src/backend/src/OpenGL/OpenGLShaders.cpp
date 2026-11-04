@@ -1,4 +1,5 @@
 #include <SalBackend/Rendering/OpenGL/OpenGLShaders.hpp>
+
 #include <glad/glad.h>
 
 namespace sal::backend {

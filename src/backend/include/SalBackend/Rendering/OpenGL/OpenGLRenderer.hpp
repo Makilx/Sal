@@ -59,6 +59,7 @@ namespace sal::backend {
         bool _inFrame = false;
         Vector<interface::RenderCommand> _frameCommands;
         interface::RenderStatus _renderStatus;
+        unsigned int _instancedTextureStack = 0;
 
         // settings
         Color _backgroundColor = Color::White;
