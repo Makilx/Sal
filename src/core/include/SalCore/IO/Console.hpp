@@ -20,17 +20,17 @@ namespace sal {
         // Methods
         template <typename... Args>
         static void Print(const Args &...args) {
-            PrintTo("INFO", InfoColor, std::cout, args...);
+            PrintTo("INFO   ", InfoColor, std::cout, args...);
         }
 
         template <typename... Args>
         static void Warn(const Args &...args) {
-            PrintTo("WARN", WarningColor, std::cerr, args...);
+            PrintTo("WARN   ", WarningColor, std::cerr, args...);
         }
 
         template <typename... Args>
         static void Error(const Args &...args) {
-            PrintTo("ERROR", ErrorColor, std::cerr, args...);
+            PrintTo("ERROR  ", ErrorColor, std::cerr, args...);
         }
 
         template <typename... Args>

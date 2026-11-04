@@ -146,8 +146,14 @@ namespace sal::backend {
             return;
         }
 
+        glDeleteTextures(1, &_instancedTextureStack);
+        _instancedTextureStack = 0;
+
         // unload resources
         for (UniquePtr<interface::IRenderResource> &resource : _resources) {
+            if (!resource->IsCreated()) {
+                continue;
+            }
             resource->Destroy();
         }
 
@@ -156,15 +162,14 @@ namespace sal::backend {
         _inFrame = false;
         _renderStatus = {};
 
-        glDeleteTextures(1, &_instancedTextureStack);
-        _instancedTextureStack = 0;
-
         // clear connections
         _resizedConnection.Disconnect();
         _resizedConnection = {};
 
         _currentWindow = nullptr;
         _loaded = false;
+
+        Console::Success("Terminated renderer successfully");
     }
 
     void OpenGLRenderer::BeginFrame() {
@@ -215,8 +220,13 @@ namespace sal::backend {
             glUseProgram(shaders->GetHandle());
 
             // draw instanced / normal
-            bool isInstanced = command.Instance.size() > 1;
+            bool isInstanced = command.Instance.size() >= 3;
 
+            shaders->Set("Sal_LightDirection", Vector3{-0.4f, -1.0f, -0.3f});
+            shaders->Set("Sal_LightColor", Vector3{1.0f, 1.0f, 1.0f});
+            shaders->Set("Sal_AmbientColor", Vector3{0.2f, 0.2f, 0.2f});
+
+            shaders->Set("Sal_Instanced", isInstanced ? 1 : 0);
             if (isInstanced) {
                 // Collect textures.
                 Dictionary<interface::ITexture *, uint32_t> textureLayers;
@@ -280,7 +290,7 @@ namespace sal::backend {
                     shaders->Set("Sal_HasAlbedo", (instance.Albedo != nullptr) ? 1 : 0);
                     if (instance.Albedo) {
                         OpenGLTexture *texture = static_cast<OpenGLTexture *>(instance.Albedo);
-                        glActiveTexture(0);
+                        glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, texture->GetHandle());
                     }
 
@@ -288,6 +298,8 @@ namespace sal::backend {
                     glDrawElements(GL_TRIANGLES,
                                    static_cast<GLsizei>(mesh->GetIndicesCount()),
                                    GL_UNSIGNED_INT, nullptr);
+
+                    _renderStatus.DrawCalls++;
                 }
             }
 

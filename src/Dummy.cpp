@@ -27,13 +27,15 @@ int main() {
 
     Part3D *part = Instance::New<Part3D>();
     part->SetParent(workspace);
+    part->SetPosition(CFrame::Identity);
+    part->SetSize(Vector3::One);
 
     Camera3D *camera = Instance::New<Camera3D>();
     workspace->SetCurrentCamera(camera);
-    camera->SetPosition(camera->GetPosition() * CFrame(0, 0, 2));
+    camera->SetPosition(camera->GetPosition() * CFrame(0, 0, 4));
 
     dataModel.SetWorkspace(workspace);
     dataModel.Run();
-
+    Instance::Terminate();
     return 0;
 }

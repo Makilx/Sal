@@ -61,6 +61,12 @@ namespace sal {
         renderer->SetBackgroundColor(Color(0.5, 0.2, 0.3));
 
         // bind runservice renderer
+        auto &scheduler = _sheduler;
+
+        runService.BindToUpdate(static_cast<SizeT>(RunPriority::First), [&scheduler, &runService](double deltaTime) {
+            scheduler.Update(runService.GetRealDeltaTime());
+        });
+
         runService.BindToUpdate(static_cast<SizeT>(RunPriority::Update),
                                 [renderer](double) { renderer->BeginFrame(); });
 
@@ -172,7 +178,7 @@ namespace sal {
         }
 
         _initialized = false;
-        Console::Warn("Terminating workspace");
+        Console::Success("Terminating datamodel");
     }
 
     void *DataModel::GetAudio() const {

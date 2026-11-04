@@ -17,6 +17,7 @@ namespace sal {
         Camera3D *_currentCamera = nullptr;
         Vector<Part3D *> _registeredParts;
         Dictionary<Shape3D, void *> _primalMeshes;
+        void *_defaultShaders = nullptr;
 
         void OnInitialization(DataModel *owner) override;
         void OnTerminate() override;

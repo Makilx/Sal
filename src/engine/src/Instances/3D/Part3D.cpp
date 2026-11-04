@@ -1,21 +1,21 @@
 #include <SalEngine/Instances/3D/Part3D.hpp>
-#include <SalInterface/Renderer/IMesh.hpp>
-#include <SalInterface/Renderer/MaterialConfig.hpp>
-#include <SalInterface/Renderer/ITexture.hpp>
+#include <SalInterface/Interface.hpp>
 
 namespace sal {
     struct Part3D::Part3DHandle {
+        interface::IShaderProgram *CustomShader = nullptr;
         interface::IMesh *CustomMesh = nullptr;
-        interface::MaterialConfig Material;
+        interface::ITexture *Albedo = nullptr;
+        Material Material;
     };
+}
 
+namespace sal {
     Part3D::Part3DHandle Part3D::GetHandle() const {
         return {
             .CustomMesh = nullptr,
-            .Material = {
-                .Shaders = nullptr,
-                .Texture = nullptr,
-                .CustomMaterial = _material,
-            }};
+            .Albedo = nullptr,
+            .Material = _material,
+        };
     }
 }
